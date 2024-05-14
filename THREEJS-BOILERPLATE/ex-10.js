@@ -1,5 +1,10 @@
 import * as THREE from 'three'
 
+// orbitcontrols import
+import {
+    OrbitControls
+} from 'three/examples/jsm/controls/OrbitControls.js'
+
 import { 
     WEBGL 
 } from './webgl'
@@ -28,8 +33,15 @@ if (WEBGL.isWebGLAvailable()) {
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
-    // 1. 그림자를 사용하겠다는 설정
     renderer.shadowMap.enabled = true;
+    // orbitcontrols는 camera 와 render가 parameter로 들어가기 때문에 그 아래에 선언해줘야한다.
+    // shift 키를 누르고 드래그 하면 카메라 위치를 바꿀 수 있다.
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.minDistance = 2;
+    controls.maxDistance = 5;
+    // 카메라 각도 바닥 넘지 않도록 설정, Math.PI / 2 로 하면 딱 바닥 바로 위로 설정된다
+    controls.maxPolarAngle = Math.PI / 2;
+    controls.update();
 
     // 도형 추가
     //const geometry = new THREE.SphereGeometry(0.5, 32, 16);
@@ -38,21 +50,21 @@ if (WEBGL.isWebGLAvailable()) {
     const material = new THREE.MeshStandardMaterial({
         color: 0x004fff,
     });
-    const cube = new THREE.Mesh(geometry, material);
-    cube.rotation.y = 0.5;
-    cube.position.y = 0.5;
-    scene.add(cube);
-    cube.castShadow = true;// 2. 그림자를 지게 할 물체 설정
-    cube.receiveShadow = true;
+    const obj = new THREE.Mesh(geometry, material);
+    obj.rotation.y = 0.5;
+    obj.position.y = 0.5;
+    scene.add(obj);
+    obj.castShadow = true;
+    obj.receiveShadow = true;
 
     const geometry2 = new THREE.IcosahedronGeometry(0.5, 0);
     const material2 = new THREE.MeshStandardMaterial({
         color: 0x004fff,
     });
-    const cube2 = new THREE.Mesh(geometry2, material2);
-    cube2.position.set(-0.8, 1.2, 0.5);
-    scene.add(cube2);
-    cube2.castShadow = true;// 2. 그림자를 지게 할 물체 설정
+    const obj2 = new THREE.Mesh(geometry2, material2);
+    obj2.position.set(-0.8, 1.2, 0.5);
+    scene.add(obj2);
+    obj2.castShadow = true;
 
 
     // 바닥 추가
@@ -64,7 +76,6 @@ if (WEBGL.isWebGLAvailable()) {
     plane.rotation.x -= 0.5*(Math.PI);
     plane.position.y -= 0.2;
     scene.add(plane);
-    // 2. 그림자를 받아주는 부분 설정
     plane.receiveShadow = true;
     
     // 빛
@@ -77,35 +88,37 @@ if (WEBGL.isWebGLAvailable()) {
     const dlHelper = new THREE.DirectionalLightHelper(dirctionalLight, 0.2, 0x0000ff);
     scene.add(dlHelper);
     scene.add(dirctionalLight);
-    // 3. 이 빛에 의한 그림자를 생성하겠다.
     dirctionalLight.castShadow = true;
-    dirctionalLight.shadow.mapSize.width = 10240;
-    dirctionalLight.shadow.mapSize.height = 10240;
+    dirctionalLight.shadow.mapSize.width = 2048;
+    dirctionalLight.shadow.mapSize.height = 2048;
     dirctionalLight.shadow.radius = 8;
 
     const pointLight = new THREE.PointLight(0xffffff, 1);
     pointLight.position.set(1, 1, 0.5);
     const plHelper = new THREE.PointLightHelper(pointLight, 0.2, 0x0000ff);
-    //scene.add(plHelper);
-    //scene.add(pointLight);
-    // // 3. 이 빛에 의한 그림자를 생성하겠다.
-    // pointLight.castShadow = true; 
+
 
     const rectLight = new THREE.RectAreaLight(0xfffff, 2, 1, 1);
     rectLight.position.set(0.3, 0.3, 0.3);
     rectLight.lookAt(0,0,0);
     // scene.add(rectLight)
-    // rectLight.castShadow = true; // 3. AmbientLight는 그림자 적용되지 않음
+    // rectLight.castShadow = true;
 
     const spotLight = new THREE.SpotLight(0xffffff, 0.5);
     spotLight.lookAt(1, 2, 1);
     //scene.add(spotLight);
     //spotLight.castShadow = true;
 
-    function render(time) {
-        renderer.render(scene, camera);
+  // three.js document에서 복사 붙여넣기, 기존의 render 함수 대신 사용 orbitcontrols
+  function animate() {
+        requestAnimationFrame( animate );
+        obj.rotation.y += 0.01;
+        obj2.rotation.x += 0.015;
+        obj2.rotation.y += 0.02;
+        controls.update();
+        renderer.render( scene, camera );
     }
-    requestAnimationFrame(render);
+    animate();
 
     // 반응형 처리 -> 종횡비 그대로 유지시키기
     function onWindowResize(){
